@@ -1,5 +1,5 @@
-# ---------- Build Frontend ----------
-FROM node:18-alpine AS frontend-build
+# ---------- Build frontend ----------
+FROM node:20-alpine AS frontend-build
 
 WORKDIR /app/frontend
 
@@ -10,8 +10,8 @@ COPY frontend .
 RUN npm run build
 
 
-# ---------- Build Backend ----------
-FROM node:18-alpine
+# ---------- Production image ----------
+FROM node:20-alpine
 
 WORKDIR /app
 
@@ -22,13 +22,13 @@ RUN cd backend && npm install --production
 # Copy backend source
 COPY backend ./backend
 
-# Copy frontend build into backend public folder
+# Copy frontend build into backend (adjust if using Vite or CRA)
 COPY --from=frontend-build /app/frontend/dist ./backend/public
 
 ENV NODE_ENV=production
 
 WORKDIR /app/backend
 
-EXPOSE 5000
+EXPOSE 8000
 
-CMD ["node", "index.js"]
+CMD ["node", "src/index.js"]
