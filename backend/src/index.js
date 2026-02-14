@@ -25,19 +25,44 @@ app.use(
   })
 );
 
+// List of allowed domains (you can add subdomains / staging)
+const allowedOrigins = [
+  "http://localhost:5173",             // local frontend
+  "http://localhost:8080",             // another dev port
+  "https://app.qtbot.dpdns.org",           // production main domain
+  "https://chat.qtbot.dpdns.org",          // production subdomain
+  "https://staging.qtbot.dpdns.org",       // staging
+  // add more as needed
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like curl or server-to-server)
+      if (!origin) return callback(null, true);
+
+      // Check if the origin is allowed
+      if (allowedOrigins.some(o => origin.startsWith(o))) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS blocked for origin: ${origin}`));
+      }
+    },
+    credentials: true, // important for cookies (JWT)
+  })
+);
+
+
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
 if (process.env.NODE_ENV === "production") {
-  // Serve static frontend files from backend/public
-  app.use(express.static(path.join(__dirname, "public")));
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-  // Return index.html for SPA routing
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "index.html"));
+    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
   });
 }
-
 
 server.listen(PORT, () => {
   console.log("server is running on PORT:" + PORT);
