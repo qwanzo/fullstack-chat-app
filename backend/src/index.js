@@ -2,72 +2,44 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+
 import path from "path";
 
 import { connectDB } from "./lib/db.js";
+
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import { app, server } from "./lib/socket.js";
 
 dotenv.config();
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT;
 const __dirname = path.resolve();
 
-// ------------------------
-// CORS setup for multiple origins (iframe-friendly)
-// ------------------------
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:8080",
-  "https://app.qtbot.dpdns.org",
-  "https://chat.qtbot.dpdns.org",
-  "https://staging.qtbot.dpdns.org",
-];
-
+app.use(express.json());
+app.use(cookieParser());
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.some(o => origin.startsWith(o))) {
-        callback(null, true);
-      } else {
-        callback(new Error(`CORS blocked for origin: ${origin}`));
-      }
-    },
-    credentials: true, // allow JWT cookies
+    origin: "http://localhost:5173",
+    credentials: true,
   })
 );
 
-// ------------------------
-// Other middleware
-// ------------------------
-app.use(express.json());
-app.use(cookieParser());
-
-// ------------------------
-// API routes
-// ------------------------
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
-// ------------------------
-// Serve frontend if production
-// ------------------------
 if (process.env.NODE_ENV === "production") {
-  const frontendPath = path.resolve(__dirname, "../../frontend/dist");
+  // Serve static frontend files from backend/public
+  app.use(express.static(path.join(__dirname, "public")));
 
-  app.use(express.static(frontendPath));
-
+  // Return index.html for SPA routing
   app.get("*", (req, res) => {
-    res.sendFile(path.join(frontendPath, "index.html"));
+    res.sendFile(path.join(__dirname, "public", "index.html"));
   });
 }
 
-// ------------------------
-// Start backend + WebSockets
-// ------------------------
+
 server.listen(PORT, () => {
-  console.log("server is running on PORT:", PORT);
+  console.log("server is running on PORT:" + PORT);
   connectDB();
 });
