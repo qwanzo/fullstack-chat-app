@@ -29,6 +29,6 @@ ENV NODE_ENV=production
 
 WORKDIR /app/backend
 
-EXPOSE 8000
+EXPOSE 5001
 
 CMD ["node", "src/index.js"]
