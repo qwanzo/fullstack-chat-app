@@ -29,12 +29,15 @@ app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  // Serve static frontend files from backend/public
+  app.use(express.static(path.join(__dirname, "public")));
 
+  // Return index.html for SPA routing
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+    res.sendFile(path.join(__dirname, "public", "index.html"));
   });
 }
+
 
 server.listen(PORT, () => {
   console.log("server is running on PORT:" + PORT);
