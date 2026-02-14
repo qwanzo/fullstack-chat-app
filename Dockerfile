@@ -1,20 +1,34 @@
-# Use official Node.js LTS image
+# ---------- Build Frontend ----------
+FROM node:18-alpine AS frontend-build
+
+WORKDIR /app/frontend
+
+COPY frontend/package*.json ./
+RUN npm install
+
+COPY frontend .
+RUN npm run build
+
+
+# ---------- Build Backend ----------
 FROM node:18-alpine
 
-# Set working directory
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Copy package.json and lockfile
-COPY package*.json ./
+# Install backend dependencies
+COPY backend/package*.json ./backend/
+RUN cd backend && npm install --production
 
-# Install dependencies
-RUN npm install --production
+# Copy backend source
+COPY backend ./backend
 
-# Copy the rest of the backend code
-COPY . .
+# Copy frontend build into backend public folder
+COPY --from=frontend-build /app/frontend/dist ./backend/public
 
-# Expose backend port (your app defaults to PORT from .env)
-EXPOSE 5001
+ENV NODE_ENV=production
 
-# Start the server
-CMD ["npm", "start"]
+WORKDIR /app/backend
+
+EXPOSE 5000
+
+CMD ["node", "index.js"]
